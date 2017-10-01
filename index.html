@@ -159,6 +159,15 @@
             
     var globals = {}; // Would-be global variables are stored here (less the above uppercase "constants").
     
+    var COLOR_PAIRS = [
+      [ "#FFF", "#000" ],
+      [ "#F00", "#0F0" ]
+    ];
+    var TEXT_PAIRS = [
+      ['black', 'black'],
+      ['white', 'white']
+    ]
+
     /*************************************************************************************************************************************************************/
 
     globals.helpers = (function() { // A self executing constructor.
@@ -203,6 +212,13 @@
         else {
           _staticGameObjectsContainer.appendChild(circle); // Place the circle in the static DOM container.
         }
+
+        if(spec.type === 'boulder') {
+          
+          circle.setAttribute("fill", spec.color1);
+          circle.setAttribute("stroke", spec.color2);
+        }
+
 
         return circle;
       }; // createCircle()
@@ -509,6 +525,13 @@
         
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+
+        if(spec.color1 && spec.color2) {
+          that.color1 = spec.color1;
+          that.color2 = spec.color2;
+        }
+
+
         return that; // Return the result of calling the GameObject constructor.
       } // Game.GameObject()      
 
@@ -708,8 +731,31 @@
                
               _objects.push(Boom(boomSpec));
 
-              _objects[i].markActive(false); // Mark the boulder object as inactive so that it'll be removed.              
-              updateScore(BOULDER_POINTS); // Credit the score since the user destroyed a boulder with a missile.
+              _objects[i].markActive(false); // Mark the boulder object as inactive so that it'll be removed.   
+
+              // calc boulder points here
+              var color1 = _objects[i].color1;
+              var color2 = _objects[i].color2;
+
+              function isMatchingColorPair(a, b) {
+                for(var pair of COLOR_PAIRS) {
+                  if(pair[0] === a && pair[1] === b ||
+                    pair[0] === b && pair[1] === a) {
+                      // it's a match!
+                      return true;
+                    }
+                }
+                return false;
+              }
+              var isMatch = isMatchingColorPair(color1, color2);
+              console.log('boom', _objects[i], color1, color2, isMatch);
+
+              var boulderPoints = isMatch ? 1000 : -10;
+
+              updateScore(boulderPoints);
+
+
+              //updateScore(BOULDER_POINTS); // Credit the score since the user destroyed a boulder with a missile.
             } // if
           } // for
         }; // Game.MissileExplosion.collisionDetection()  
@@ -1154,7 +1200,20 @@
           boulderSpec.stroke = "white";
           boulderSpec.strokeWidth = 2; // In SVG user units.  
           boulderSpec.movable = true; // Allow the user to click on top of a boulder to send another missile, if they're so inclined.
-                              
+          function getRandomElement(A) {
+            var ix = Math.floor(Math.random() * A.length);
+            return A[ix];
+          }
+
+          var colorPair1 = getRandomElement(COLOR_PAIRS);
+          var color1 = getRandomElement(colorPair1);
+
+          var colorPair2 = getRandomElement(COLOR_PAIRS);
+          var color2 = getRandomElement(colorPair2);
+
+          boulderSpec.color1 = color1;
+          boulderSpec.color2 = color2;
+
           _objects.push(Boulder(boulderSpec));
           
           boulders--;
